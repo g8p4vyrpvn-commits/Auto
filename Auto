@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>UberCars SaaS Global</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6fb}
+
+/* HEADER */
+header{
+background:#0b0f1a;
+color:white;
+padding:15px;
+text-align:center;
+font-weight:bold;
+}
+
+/* NAV */
+.nav{
+display:flex;
+gap:10px;
+justify-content:center;
+padding:10px;
+background:white;
+flex-wrap:wrap;
+}
+
+.nav button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#1d4ed8;
+color:white;
+}
+
+/* SECTIONS */
+.section{display:none;padding:15px;}
+.active{display:block;}
+
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
+}
+
+/* CARD */
+.card{
+background:white;
+border-radius:10px;
+overflow:hidden;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.card img{
+width:100%;
+height:140px;
+object-fit:cover;
+}
+
+.content{padding:10px}
+
+.price{color:red;font-weight:bold}
+
+/* BUTTON */
+button.action{
+width:100%;
+padding:10px;
+border:none;
+margin-top:5px;
+border-radius:6px;
+cursor:pointer;
+color:white;
+}
+
+.blue{background:#1d4ed8}
+.green{background:green}
+.red{background:red}
+
+/* FORM */
+input,select{
+width:100%;
+padding:10px;
+margin:5px 0;
+border-radius:6px;
+border:1px solid #ddd;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+🚗 UberCars SaaS Global
+
+<select id="lang" onchange="setLang()" style="margin-top:10px;padding:5px;">
+<option value="fr">🇫🇷 FR</option>
+<option value="en">🇬🇧 EN</option>
+<option value="es">🇪🇸 ES</option>
+<option value="de">🇩🇪 DE</option>
+<option value="it">🇮🇹 IT</option>
+<option value="pt">🇵🇹 PT</option>
+<option value="nl">🇳🇱 NL</option>
+<option value="pl">🇵🇱 PL</option>
+<option value="tr">🇹🇷 TR</option>
+<option value="ru">🇷🇺 RU</option>
+<option value="ar">🇸🇦 AR</option>
+<option value="hi">🇮🇳 HI</option>
+<option value="zh">🇨🇳 ZH</option>
+<option value="ja">🇯🇵 JA</option>
+<option value="ko">🇰🇷 KO</option>
+<option value="vi">🇻🇳 VI</option>
+<option value="id">🇮🇩 ID</option>
+<option value="th">🇹🇭 TH</option>
+<option value="pcm">🇳🇬 Pidgin</option>
+<option value="dar">🇹🇳 Darja</option>
+<option value="cm">🇨🇲 CM</option>
+</select>
+</header>
+
+<div class="nav">
+<button onclick="show('market')" id="btnMarket">Marketplace</button>
+<button onclick="show('sell')" id="btnSell">Vendre</button>
+<button onclick="show('admin')" id="btnAdmin">Admin</button>
+</div>
+
+<!-- MARKET -->
+<div id="market" class="section active">
+<h2 id="titleCars">Voitures disponibles</h2>
+<div class="grid" id="grid"></div>
+</div>
+
+<!-- SELL -->
+<div id="sell" class="section">
+<h2 id="titleSell">Vendre une voiture</h2>
+
+<input id="name" placeholder="Nom">
+<input id="price" type="number" placeholder="Prix">
+<input id="km" type="number" placeholder="Kilométrage">
+<input id="img" placeholder="Image URL">
+
+<button class="action green" onclick="submitCar()" id="submitBtn">
+Envoyer
+</button>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="section">
+<h2 id="titleAdmin">Admin Panel</h2>
+<p>En attente: <span id="pending"></span></p>
+<div id="adminList"></div>
+</div>
+
+<script>
+
+/* ADMIN */
+const ADMIN_PHONE="+237641304125";
+
+/* LANGUAGES (simplifié mais fonctionnel) */
+const T={
+fr:{cars:"Voitures disponibles",sell:"Vendre",admin:"Admin",submit:"Envoyer",approve:"Valider",reject:"Refuser",order:"Commander"},
+en:{cars:"Available Cars",sell:"Sell",admin:"Admin",submit:"Send",approve:"Approve",reject:"Reject",order:"Order"},
+es:{cars:"Coches disponibles",sell:"Vender",admin:"Admin",submit:"Enviar",approve:"Aprobar",reject:"Rechazar",order:"Comprar"},
+de:{cars:"Autos verfügbar",sell:"Verkaufen",admin:"Admin",submit:"Senden",approve:"Genehmigen",reject:"Ablehnen",order:"Bestellen"},
+it:{cars:"Auto disponibili",sell:"Vendere",admin:"Admin",submit:"Invia",approve:"Approva",reject:"Rifiuta",order:"Ordina"},
+pt:{cars:"Carros disponíveis",sell:"Vender",admin:"Admin",submit:"Enviar",approve:"Aprovar",reject:"Rejeitar",order:"Comprar"},
+nl:{cars:"Auto's beschikbaar",sell:"Verkopen",admin:"Admin",submit:"Versturen",approve:"Goedkeuren",reject:"Afwijzen",order:"Bestellen"},
+pl:{cars:"Dostępne auta",sell:"Sprzedaj",admin:"Admin",submit:"Wyślij",approve:"Zatwierdź",reject:"Odrzuć",order:"Zamów"},
+tr:{cars:"Arabalar",sell:"Sat",admin:"Admin",submit:"Gönder",approve:"Onayla",reject:"Reddet",order:"Sipariş"},
+ru:{cars:"Авто",sell:"Продать",admin:"Админ",submit:"Отправить",approve:"Одобрить",reject:"Отклонить",order:"Заказать"},
+ar:{cars:"سيارات",sell:"بيع",admin:"مدير",submit:"إرسال",approve:"قبول",reject:"رفض",order:"طلب"},
+hi:{cars:"कारें",sell:"बेचना",admin:"एडमिन",submit:"भेजें",approve:"स्वीकृत",reject:"अस्वीकृत",order:"ऑर्डर"},
+zh:{cars:"汽车",sell:"出售",admin:"管理员",submit:"提交",approve:"批准",reject:"拒绝",order:"下单"},
+ja:{cars:"車",sell:"販売",admin:"管理者",submit:"送信",approve:"承認",reject:"拒否",order:"注文"},
+ko:{cars:"자동차",sell:"판매",admin:"관리자",submit:"제출",approve:"승인",reject:"거부",order:"주문"},
+vi:{cars:"Xe",sell:"Bán",admin:"Admin",submit:"Gửi",approve:"Duyệt",reject:"Từ chối",order:"Đặt"},
+id:{cars:"Mobil",sell:"Jual",admin:"Admin",submit:"Kirim",approve:"Setuju",reject:"Tolak",order:"Pesan"},
+th:{cars:"รถ",sell:"ขาย",admin:"แอดมิน",submit:"ส่ง",approve:"อนุมัติ",reject:"ปฏิเสธ",order:"สั่ง"},
+pcm:{cars:"Cars",sell:"Sell",admin:"Admin",submit:"Send",approve:"Approve",reject:"Reject",order:"Order"},
+dar:{cars:"سيارات",sell:"بيع",admin:"إدارة",submit:"إرسال",approve:"قبول",reject:"رفض",order:"طلب"},
+cm:{cars:"Voitures",sell:"Vendre",admin:"Admin",submit:"Envoyer",approve:"Valider",reject:"Refuser",order:"Commander"}
+};
+
+let lang="fr";
+
+/* DATA */
+let cars=[
+{id:1,name:"Toyota Corolla",price:8000,km:120000,status:"approved",img:"https://source.unsplash.com/400x300/?toyota"},
+{id:2,name:"BMW X5",price:15000,km:90000,status:"approved",img:"https://source.unsplash.com/400x300/?bmw"}
+];
+
+let pending=[];
+
+/* LANG */
+function setLang(){
+lang=document.getElementById("lang").value;
+render();
+updateTexts();
+}
+
+function updateTexts(){
+document.getElementById("titleCars").innerText=T[lang].cars;
+document.getElementById("titleSell").innerText=T[lang].sell;
+document.getElementById("titleAdmin").innerText=T[lang].admin;
+document.getElementById("submitBtn").innerText=T[lang].submit;
+}
+
+/* NAV */
+function show(s){
+document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+document.getElementById(s).classList.add("active");
+render();
+}
+
+/* SUBMIT */
+function submitCar(){
+pending.push({
+id:Date.now(),
+name:document.getElementById("name").value,
+price:document.getElementById("price").value,
+km:document.getElementById("km").value,
+img:document.getElementById("img").value || "https://source.unsplash.com/400x300/?car",
+status:"pending"
+});
+
+window.open(`https://wa.me/${ADMIN_PHONE}?text=Nouvelle voiture à valider`);
+alert("Envoyé à l’admin");
+render();
+}
+
+/* APPROVE */
+function approve(id){
+let c=pending.find(x=>x.id===id);
+cars.push(c);
+pending=pending.filter(x=>x.id!==id);
+render();
+}
+
+/* REJECT */
+function reject(id){
+pending=pending.filter(x=>x.id!==id);
+render();
+}
+
+/* RENDER */
+function render(){
+let g=document.getElementById("grid");
+g.innerHTML="";
+
+cars.forEach(c=>{
+g.innerHTML+=`
+<div class="card">
+<img src="${c.img}">
+<div class="content">
+<h3>${c.name}</h3>
+<p>${c.km} km</p>
+<p class="price">${c.price}€</p>
+<button class="action blue">${T[lang].order}</button>
+</div>
+</div>
+`;
+});
+
+let a=document.getElementById("adminList");
+a.innerHTML="";
+
+pending.forEach(c=>{
+a.innerHTML+=`
+<div class="card">
+<img src="${c.img}">
+<div class="content">
+<h3>${c.name}</h3>
+<p>${c.price}€</p>
+<button class="action green" onclick="approve(${c.id})">${T[lang].approve}</button>
+<button class="action red" onclick="reject(${c.id})">${T[lang].reject}</button>
+</div>
+</div>
+`;
+});
+
+document.getElementById("pending").innerText=pending.length;
+}
+
+render();
+updateTexts();
+
+</script>
+
+</body>
+</html>
